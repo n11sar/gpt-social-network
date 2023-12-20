@@ -2,6 +2,8 @@ package org.example.gptsocialnetwork;
 
 import java.util.HashSet;
 import java.util.Optional;
+import org.example.gptsocialnetwork.entities.UserFollowers;
+import org.example.gptsocialnetwork.repositories.UserFollowersRepository;
 import org.example.gptsocialnetwork.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,8 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private UserFollowersRepository userFollowersRepository;
 
     @InjectMocks
     private UserService userService;
@@ -56,12 +60,26 @@ class UserServiceTest {
 
     @Test
     void testUnfollowUser() {
-        assertTrue(user.getFollowers().contains(follower));
+        Long userId = 1L;
+        Long followerId = 2L;
 
-        userService.unfollowUser(1L, 2L);
+        User user = new User();
+        user.setId(userId);
+        User follower = new User();
+        follower.setId(followerId);
 
-        assertFalse(user.getFollowers().contains(follower));
-        verify(userRepository, times(1)).save(user);
+        UserFollowers userFollower = new UserFollowers();
+        userFollower.setUser(user);
+        userFollower.setFollower(follower);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(followerId)).thenReturn(Optional.of(follower));
+        when(userFollowersRepository.findByUserAndFollower(user, follower)).thenReturn(userFollower);
+
+        userService.unfollowUser(userId, followerId);
+
+        verify(userFollowersRepository, times(1)).findByUserAndFollower(user, follower);
+        verify(userFollowersRepository, times(1)).delete(userFollower);
     }
 }
 
